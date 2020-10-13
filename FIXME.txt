@@ -1,0 +1,11 @@
+=== Bug ===
+-If email is not in DB, cannot log in using another email (maybe due to incomplete logout)
+
+=== Fix ===
+-change Image fit mode from 'cover' to 'contain
+-Google signin ID is different for debug and release mode and also for Android and iOS (See Google Developer Console)
+
+=== Building release APK ===
+https://reactnative.dev/docs/signed-apk-android
+for offline usage, change the last step to 'gradlew assembleRelease' in android folder
+dummy build key is 'itasset'

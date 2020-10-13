@@ -1,0 +1,15 @@
+POST http://asset.itschool.mfu.ac.th/api/mobile/login
+content-type: application/json
+
+{
+    "email": "surapong@mfu.ac.th"
+}
+
+###
+PUT http://asset.itschool.mfu.ac.th/api/mobile/keepusername
+content-type: application/json
+
+{
+    "email": "surapong@mfu.ac.th",
+    "name": "Surapong Uttama"
+}

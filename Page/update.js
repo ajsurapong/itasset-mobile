@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text,View,StyleSheet,TouchableOpacity,Dimensions,Alert,Image,} from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Alert, Image, TextInput } from 'react-native';
 import { CheckBox, Overlay, Icon, Button } from 'react-native-elements';
 import { instance as axios, url } from './axios'
 import AsyncStorage from '@react-native-community/async-storage';
@@ -49,10 +49,10 @@ export default class update extends Component {
 
   UNSAFE_componentWillReceiveProps(nextProps) {
     let { image } = nextProps.route.params;
-    if(image !== undefined){
+    if (image !== undefined) {
       this.setState({ image: image })
     }
-    
+
   }
 
   checkReqimage = () => {
@@ -61,8 +61,8 @@ export default class update extends Component {
     }
     // console.log(this.state.reqImage)
     if (this.state.reqImage == 1 && (this.state.image == '' || this.state.image === undefined)) {
-      console.log('tttttttt')
-      this.state.reqImage = 'ต้องการถ่ายรูป' 
+      // console.log('tttttttt')
+      this.state.reqImage = 'ต้องการถ่ายรูป'
       Alert.alert(
         //title
         'กรุณาเพิ่มภาพถ่ายครุภัณฑ์',
@@ -77,16 +77,16 @@ export default class update extends Component {
     } else if (this.state.reqImage == 1 && this.state.image != '') {
       this.state.reqImage = 'ต้องการถ่ายรูป'
       this.setState({ visible: true })
-      console.log('1')
+      // console.log('1')
     }
     else if (this.state.reqImage != 1 && this.state.image != '') {
       this.state.reqImage = 'ไม่ต้องการถ่ายรูป'
       this.setState({ visible: true })
-      console.log('2')
+      // console.log('2')
     } else {
       this.state.reqImage = 'ไม่ต้องการถ่ายรูป'
       this.setState({ noImage: true })
-      console.log('3')
+      // console.log('3')
     }
 
   }
@@ -98,7 +98,10 @@ export default class update extends Component {
       product_editorDate: date,
       user_editor: username.email,
       product_statusID: this.state.status_id,
-      product_code: this.state.id_I
+      product_code: this.state.id_I,
+      // add location and room
+      product_location: this.state.Location,
+      product_room: this.state.Room_i,
     }
     axios.post('/uploadNoImage', { product_data }).then(response => {
       this.setState({ loading: false })
@@ -129,11 +132,15 @@ export default class update extends Component {
       product_editorDate: date,
       user_editor: data.email,
       product_statusID: this.state.status_id,
-      product_code: this.state.id_I
+      product_code: this.state.id_I,
+      // add location and room
+      product_location: this.state.Location,
+      product_room: this.state.Room_i,
     }
     let fileName = this.state.image.replace("file:///data/user/0/com.asset/cache/Camera/", "");
     uploadData.append('photo', { uri: this.state.image, name: fileName, type: 'image/jpeg' })
     uploadData.append('data', JSON.stringify(product_data));
+
     axios.post('/uploadWithImage', uploadData).then(response => {
       if (response.status == 200) {
         this.setState({ loading: false })
@@ -169,241 +176,103 @@ export default class update extends Component {
       this.setState({ ck_normal: false, ck_repair: true, status_id: 2 })
     }
   }
+
   render() {
     return (
-      <View style={styles.Body}>
-        <View style={styles.header}>
-          <View style={{ alignItems: 'center' }}>
-            <TouchableOpacity onPress={() => this.props.navigation.navigate('Scan')} style={{ flexDirection: 'row', justifyContent: 'center' }}>
-              <Icon name='chevron-left' type='FontAwesome5' size={50} color='white' />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={this.state.image == '' ? styles.Pic1 : styles.Pic2}>
-          <View style={styles.img}>
-            <TouchableOpacity onPress={() => this.props.navigation.navigate('Capture')} style={{ flexDirection: 'row', justifyContent: 'center' }}>
-              <Image
-                source = {this.state.image != '' ? {uri: this.state.image} : require('../assets/img/addimgNew1.png')}
-                // source={{ uri: this.state.image ? this.state.image : `${url}/img1/addimgNew1.png` }}
-                resizeMode='contain'
-                style={{ width: Dimensions.get('window').width / 1.5, height: Dimensions.get('window').height / 3, alignItems: 'center', justifyContent: 'center' }}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.del}>
-
-          <View style={{ flexDirection: 'row', height: Dimensions.get('window').height / 5 }}>
-
-            <View style={{ width: Dimensions.get('window').width, justifyContent: 'space-around', height: Dimensions.get('window').height / 6, marginTop: Dimensions.get('window').height / 12, }}>
-              <Text style={styles.HeadContent}>ข้อมูลครุภัณฑ์</Text>
-              <Text style={styles.TEXT}>เลขครุภัณฑ์ : {this.state.id_I}</Text>
-              <Text style={styles.TEXT}>คำอธิบาย : {this.state.desc_I}</Text>
-              <Text style={styles.TEXT}>สถานที่ : {this.state.Location} </Text>
-              <Text style={styles.TEXT}>ห้อง : {this.state.Room_i}</Text>
-              <Text style={styles.HeadStatus}> สถานะ : <Text style={this.state.reqImage == 'ไม่ต้องการถ่ายรูป' ? styles.reqImage1 : styles.reqImage2}>{this.state.reqImage}</Text></Text>
-            </View>
-          </View>
-
-          <View
-            style={{
-              justifyContent: 'space-between',
-              flexDirection: 'row',
-              marginTop: Dimensions.get('window').height / 10,
-            }}>
-            <CheckBox size={30} center title="ปกติ    " checked={this.state.ck_normal} onPress={() => this.checkBox('normal')} />
-            <CheckBox size={30} center title="เสื่อมสภาพ" checked={this.state.ck_repair} onPress={() => this.checkBox('repair')} />
-          </View>
-        </View>
-
-        <View style={styles.Bot}>
-
-          <TouchableOpacity
-            style={styles.UpD}
-            onPress={this.checkReqimage}>
-            <Text style={{ color: 'white', fontSize: 22 }}>อัพเดตข้อมูล</Text>
+      <View style={{ flex: 1, justifyContent: 'space-between' }}>
+        {/* Back button */}
+        <View style={{ backgroundColor: "#1E90FF", alignItems: "flex-start" }}>
+          <TouchableOpacity onPress={() => this.props.navigation.navigate('Scan')}>
+            <Icon name='chevron-left' type='FontAwesome5' size={50} color='white' />
           </TouchableOpacity>
-
         </View>
 
+        {/* Image */}
+        <View>
+          <TouchableOpacity onPress={() => this.props.navigation.navigate('Capture')}>
+            <Image
+              source={this.state.image != '' ? { uri: this.state.image } : require('../assets/img/addimgNew1.png')}
+              resizeMode="contain"
+              style={{ width: null, height: 180 }} />
+          </TouchableOpacity>
+        </View>
 
-        {this.state.visible && (
-          <Overlay
-            isVisible
-            overlayBackgroundColor="white"
-            overlayStyle={{ width: Dimensions.get('window').width / 1.33, height: Dimensions.get('window').height / 3.33, borderRadius: 15 }}
-          >
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        {/* Asset details */}
+        <View style={{ backgroundColor: "#ffebcd", padding: 20, margin: 8, borderRadius: 16 }}>
+          {/* <Text style={{ fontWeight: 'bold', fontSize: 20 }}>ข้อมูลครุภัณฑ์</Text> */}
+          <Text style={{ fontSize: 16, marginTop: 8 }}>เลขครุภัณฑ์ : {this.state.id_I}</Text>
+          <Text style={{ fontSize: 16, marginTop: 8 }}>คำอธิบาย : {this.state.desc_I}</Text>
+          <TextInput style={{ width: '80%', backgroundColor: "#FFFAF0", padding: 5, marginTop: 5 }} placeholder="อาคารสถานที่" onChangeText={(text) => this.setState({ Location: text })} value={this.state.Location} />
+          <TextInput style={{ width: '80%', backgroundColor: "#FFFAF0", padding: 5, marginTop: 5 }} placeholder="ห้อง" onChangeText={(text) => this.setState({ Room_i: text })} value={this.state.Room_i} />
+          <Text style={{ fontSize: 16, marginTop: 8 }}>สถานะ: {this.state.reqImage}</Text>
+        </View>
+
+        {/* Status checking */}
+        <View
+          style={{
+            justifyContent: 'space-evenly',
+            flexDirection: 'row',
+          }}>
+          <CheckBox size={30} center title="ปกติ    " checked={this.state.ck_normal} onPress={() => this.checkBox('normal')} />
+          <CheckBox size={30} center title="เสื่อมสภาพ" checked={this.state.ck_repair} onPress={() => this.checkBox('repair')} />
+        </View>
+
+        {/* Update Button */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+          <TouchableOpacity onPress={this.checkReqimage}>
+            <Text style={{ color: 'white', fontSize: 22, backgroundColor: '#FF4500', paddingVertical: 8, paddingHorizontal: 16, marginBottom: 8, borderRadius: 16 }}>อัพเดตข้อมูล</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Overlay for image taking */}
+        {
+          this.state.visible && (
+            <Overlay
+              isVisible
+              overlayBackgroundColor="white"
+              overlayStyle={{ width: Dimensions.get('window').width / 1.33, height: Dimensions.get('window').height / 3.33, borderRadius: 15 }}
+            >
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={require('../assets/img/warning.png')} />
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <Image source={require('../assets/img/warning.png')} />
+                </View>
+                <View style={{ width: Dimensions.get('window').width, height: '30%', alignItems: 'center', justifyContent: 'center', marginVertical: '3%' }}>
+                  <Text style={{ fontSize: 15, textAlign: 'center' }}>คุณแน่ใจว่าต้องการอัพเดตข้อมูล?</Text>
+                </View>
+                <View style={{ width: '100%', height: '30%', justifyContent: 'space-around', flexDirection: 'row' }}>
+                  <Button title='ตกลง' buttonStyle={{ backgroundColor: '#17A589' }} containerStyle={{ width: '40%' }} onPress={this.UpdateWithImage} loading={this.state.loading} />
+                  <Button title='ยกเลิก' buttonStyle={{ backgroundColor: '#9F9C9E' }} containerStyle={{ width: '40%' }} onPress={() => this.setState({ visible: false, loading: false })} />
+                </View>
               </View>
-              <View style={{ width: Dimensions.get('window').width, height: '30%', alignItems: 'center', justifyContent: 'center', marginVertical: '3%' }}>
-                <Text style={{ fontSize: 15, textAlign: 'center' }}>คุณแน่ใจว่าต้องการอัพเดตข้อมูล?</Text>
+            </Overlay>
+          )
+        }
+
+        {
+          this.state.noImage && (
+            <Overlay
+              isVisible
+              overlayBackgroundColor="white"
+              overlayStyle={{ width: '75%', height: '35%', borderRadius: 15 }}
+            >
+              <View style={{ flex: 1, justifyContent: 'space-around' }}>
+                <View style={{ width: '100%', height: '35%', alignItems: 'center' }}>
+                  <Image source={require('../assets/img/warning.png')} />
+                </View>
+                <Text style={{ fontSize: 16, textAlign: 'center' }}>คุณแน่ใจว่าต้องการอัพเดตข้อมูลโดยไม่มีรูปภาพ?</Text>
+                <View style={{ width: '100%', height: '30%', alignItems: 'center', justifyContent: 'space-around', flexDirection: 'row' }}>
+                  <Button title='ตกลง' buttonStyle={{ backgroundColor: '#17A589' }} containerStyle={{ width: '40%' }} onPress={this.UpdateNoImage} loading={this.state.loading} />
+                  <Button title='ยกเลิก' buttonStyle={{ backgroundColor: '#9F9C9E' }} containerStyle={{ width: '40%' }} onPress={() => this.setState({ noImage: false, loading: false })} />
+                </View>
               </View>
-              <View style={{ width: '100%', height: '30%', justifyContent: 'space-around', flexDirection: 'row' }}>
-                <Button title='ตกลง' buttonStyle={{ backgroundColor: '#17A589' }} containerStyle={{ width: '40%' }} onPress={this.UpdateWithImage} loading={this.state.loading} />
-                <Button title='ยกเลิก' buttonStyle={{ backgroundColor: '#9F9C9E' }} containerStyle={{ width: '40%' }} onPress={() => this.setState({ visible: false, loading: false })} />
-              </View>
-            </View>
-          </Overlay>
-        )}
-        {this.state.noImage && (
-          <Overlay
-            isVisible
-            overlayBackgroundColor="white"
-            overlayStyle={{ width: '75%', height: '30%', borderRadius: 15 }}
-          >
-            <View style={{ flex: 1, justifyContent: 'space-around' }}>
-              <View style={{ width: '100%', height: '40%', alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={require('../assets/img/warning.png')} />
-              </View>
-              <View style={{ width: '100%', height: '40%', justifyContent: 'center', alignItems: 'center', marginVertical: '5%' }}>
-                <Text style={{ fontSize: 15, textAlign: 'center' }}>คุณแน่ใจว่าต้องการอัพเดตข้อมูลโดยไม่มีรูปภาพ?</Text>
-              </View>
-              <View style={{ width: '100%', height: '30%', alignItems: 'center', justifyContent: 'space-around', flexDirection: 'row' }}>
-                <Button title='ตกลง' buttonStyle={{ backgroundColor: '#17A589' }} containerStyle={{ width: '40%' }} onPress={this.UpdateNoImage} loading={this.state.loading} />
-                <Button title='ยกเลิก' buttonStyle={{ backgroundColor: '#9F9C9E' }} containerStyle={{ width: '40%' }} onPress={() => this.setState({ noImage: false, loading: false })} />
-              </View>
-            </View>
-          </Overlay>
-        )}
-      </View>
+            </Overlay>
+          )
+        }
+      </View >
     );
   }
 }
 
 const styles = StyleSheet.create({
-  Body: {
-    height: Dimensions.get('window').height / 1,
-    width: Dimensions.get('window').width,
-    // backgroundColor: '#ecefef',
-    alignItems: 'center'
-  },
-  header: {
-    backgroundColor: '#3fc0df',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: Dimensions.get('window').height / 20,
-    width: Dimensions.get('window').width,
-    marginBottom: Dimensions.get('window').height / 32,
-  },
-  Pic1: {
-    height: Dimensions.get('window').height / 2.8,
-    width: Dimensions.get('window').width / 1.33,
-    alignItems: 'center',
-    marginTop: Dimensions.get('window').height / 40 * (-1),
-    marginLeft: Dimensions.get('window').width / 20
-  },
-  Pic2: {
-    height: Dimensions.get('window').height / 2.86,
-    width: Dimensions.get('window').width,
-    alignItems: 'center',
-  },
-  del: {
-    height: Dimensions.get('window').height / 2.3,
-    width: Dimensions.get('window').width / 1.11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    borderRadius: 25,
-  },
-  TEXT: {
-    color: 'black',
-    fontSize: 15,
-    marginLeft: Dimensions.get('window').width / 10,
-    marginTop: Dimensions.get('window').height / 10,
-    // fontWeight: 'bold'
-  },
-  HeadContent: {
-    color: 'black',
-    fontSize: 20,
-    marginLeft: Dimensions.get('window').width / 10,
-    marginTop: Dimensions.get('window').height / -20,
-    marginBottom: Dimensions.get('window').height / -100,
-    fontWeight: 'bold',
-  },
-  HeadStatus: {
-    color: 'black',
-    fontSize: 20,
-    marginLeft: Dimensions.get('window').width / 12,
-    marginTop: Dimensions.get('window').height / 10,
-    // marginBottom: Dimensions.get('window').height / 50,
-    fontWeight: 'bold',
-  },
-  reqImage1: {
-    color: 'black',
-    fontSize: 20,
-    marginLeft: Dimensions.get('window').width / 17,
-    marginTop: Dimensions.get('window').height / 80,
-    // marginBottom: Dimensions.get('window').height / 50,
-    fontWeight: 'bold',
-  },
-  reqImage2: {
-    color: 'red',
-    fontSize: 20,
-    marginLeft: Dimensions.get('window').width / 17,
-    marginTop: Dimensions.get('window').height / 80,
-    // marginBottom: Dimensions.get('window').height / 50,
-    fontWeight: 'bold',
-  },
-  Bot: {
-    height: Dimensions.get('window').height / 2,
-    width: Dimensions.get('window').width,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    marginLeft: Dimensions.get('window').width / 13
-  },
-  UpD: {
-    backgroundColor: '#33dea2',
-    borderRadius: 15,
-    width: Dimensions.get('window').width / 2,
-    height: Dimensions.get('window').height / 13.7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Dimensions.get('window').width / 10,
-    marginTop: Dimensions.get('window').height / 40,
-  },
-  Cancel: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    borderWidth: 1.5,
-    borderTopColor: '#33dea2',
-    borderBottomColor: '#33dea2',
-    borderRightColor: '#33dea2',
-    borderLeftColor: '#33dea2',
-    width: Dimensions.get('window').width / 5.56,
-    height: Dimensions.get('window').height / 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: Dimensions.get('window').width / 10,
-    marginTop: Dimensions.get('window').height / 40,
-  },
-  indecator: {
-    position: 'absolute',
-    left: 0,
-    padding: 10
-  },
-  overlay: {
-    zIndex: 90,
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F9EEE8',
-  },
-  font: {
-    fontSize: 25,
-  },
-  img: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-    borderRadius: 20,
-    alignItems: 'center',
-  }
+  
 });

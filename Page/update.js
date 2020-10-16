@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Alert, Image, TextInput } from 'react-native';
-import { CheckBox, Overlay, Icon, Button } from 'react-native-elements';
+import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Alert, Image, TextInput, KeyboardAvoidingView } from 'react-native';
+import { CheckBox, Icon, Button } from 'react-native-elements';
 import { instance as axios, url } from './axios'
 import AsyncStorage from '@react-native-community/async-storage';
 import { StackActions } from '@react-navigation/native';
+import Modal from 'react-native-modal';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const resetAction = StackActions.replace('Scan');
 const today = new Date();
@@ -52,7 +54,6 @@ export default class update extends Component {
     if (image !== undefined) {
       this.setState({ image: image })
     }
-
   }
 
   checkReqimage = () => {
@@ -88,7 +89,6 @@ export default class update extends Component {
       this.setState({ noImage: true })
       // console.log('3')
     }
-
   }
 
   UpdateNoImage = async () => {
@@ -187,35 +187,41 @@ export default class update extends Component {
           </TouchableOpacity>
         </View>
 
-        {/* Image */}
-        <View>
-          <TouchableOpacity onPress={() => this.props.navigation.navigate('Capture')}>
-            <Image
-              source={this.state.image != '' ? { uri: this.state.image } : require('../assets/img/addimgNew1.png')}
-              resizeMode="contain"
-              style={{ width: null, height: 180 }} />
-          </TouchableOpacity>
-        </View>
+        {/* Image and Asset Info*/}
+        <ScrollView>
+          {/* Use ScrollView + KeyboardAvoidingView to prevent keyboard overlap content */}
+          <KeyboardAvoidingView behavior='padding'>
+            <TouchableOpacity onPress={() => this.props.navigation.navigate('Capture')}>
+              <Image
+                source={this.state.image != '' ? { uri: this.state.image } : require('../assets/img/addimgNew1.png')}
+                resizeMode="contain"
+                style={{ width: null, height: 180, marginVertical: 16 }} />
+            </TouchableOpacity>
 
-        {/* Asset details */}
-        <View style={{ backgroundColor: "#ffebcd", padding: 20, margin: 8, borderRadius: 16 }}>
-          {/* <Text style={{ fontWeight: 'bold', fontSize: 20 }}>ข้อมูลครุภัณฑ์</Text> */}
-          <Text style={{ fontSize: 16, marginTop: 8 }}>เลขครุภัณฑ์ : {this.state.id_I}</Text>
-          <Text style={{ fontSize: 16, marginTop: 8 }}>คำอธิบาย : {this.state.desc_I}</Text>
-          <TextInput style={{ width: '80%', backgroundColor: "#FFFAF0", padding: 5, marginTop: 5 }} placeholder="อาคารสถานที่" onChangeText={(text) => this.setState({ Location: text })} value={this.state.Location} />
-          <TextInput style={{ width: '80%', backgroundColor: "#FFFAF0", padding: 5, marginTop: 5 }} placeholder="ห้อง" onChangeText={(text) => this.setState({ Room_i: text })} value={this.state.Room_i} />
-          <Text style={{ fontSize: 16, marginTop: 8 }}>สถานะ: {this.state.reqImage}</Text>
-        </View>
+            {/* Asset details */}
+            <View style={{ backgroundColor: "#ffebcd", padding: 16, marginHorizontal: 8, borderRadius: 16 }}>
+              {/* <Text style={{ fontWeight: 'bold', fontSize: 20 }}>ข้อมูลครุภัณฑ์</Text> */}
+              <Text style={{ fontSize: 16 }}>เลขครุภัณฑ์ : {this.state.id_I}</Text>
+              <Text style={{ fontSize: 16 }}>คำอธิบาย : {this.state.desc_I}</Text>
 
-        {/* Status checking */}
-        <View
-          style={{
-            justifyContent: 'space-evenly',
-            flexDirection: 'row',
-          }}>
-          <CheckBox size={30} center title="ปกติ    " checked={this.state.ck_normal} onPress={() => this.checkBox('normal')} />
-          <CheckBox size={30} center title="เสื่อมสภาพ" checked={this.state.ck_repair} onPress={() => this.checkBox('repair')} />
-        </View>
+              <Text style={{ fontSize: 16, marginTop: 8 }}>อาคารและห้อง :</Text>
+              <TextInput style={{ width: '80%', backgroundColor: "#FFFAF0", padding: 5, marginTop: 5 }} placeholder="อาคาร" onChangeText={(text) => this.setState({ Location: text })} value={this.state.Location} />
+              <TextInput style={{ width: '80%', backgroundColor: "#FFFAF0", padding: 5, marginTop: 5 }} placeholder="ห้อง" onChangeText={(text) => this.setState({ Room_i: text })} value={this.state.Room_i} />
+
+              <Text style={{ fontSize: 16, marginVertical: 8 }}>สถานะ: {this.state.reqImage}</Text>
+            </View>
+
+            {/* Status checking */}
+            <View
+              style={{
+                justifyContent: 'space-evenly',
+                flexDirection: 'row',
+              }}>
+              <CheckBox size={30} center title="ปกติ" checked={this.state.ck_normal} onPress={() => this.checkBox('normal')} />
+              <CheckBox size={30} center title="เสื่อมสภาพ" checked={this.state.ck_repair} onPress={() => this.checkBox('repair')} />
+            </View>
+          </KeyboardAvoidingView>
+        </ScrollView>
 
         {/* Update Button */}
         <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
@@ -225,54 +231,31 @@ export default class update extends Component {
         </View>
 
         {/* Overlay for image taking */}
-        {
-          this.state.visible && (
-            <Overlay
-              isVisible
-              overlayBackgroundColor="white"
-              overlayStyle={{ width: Dimensions.get('window').width / 1.33, height: Dimensions.get('window').height / 3.33, borderRadius: 15 }}
-            >
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                  <Image source={require('../assets/img/warning.png')} />
-                </View>
-                <View style={{ width: Dimensions.get('window').width, height: '30%', alignItems: 'center', justifyContent: 'center', marginVertical: '3%' }}>
-                  <Text style={{ fontSize: 15, textAlign: 'center' }}>คุณแน่ใจว่าต้องการอัพเดตข้อมูล?</Text>
-                </View>
-                <View style={{ width: '100%', height: '30%', justifyContent: 'space-around', flexDirection: 'row' }}>
-                  <Button title='ตกลง' buttonStyle={{ backgroundColor: '#17A589' }} containerStyle={{ width: '40%' }} onPress={this.UpdateWithImage} loading={this.state.loading} />
-                  <Button title='ยกเลิก' buttonStyle={{ backgroundColor: '#9F9C9E' }} containerStyle={{ width: '40%' }} onPress={() => this.setState({ visible: false, loading: false })} />
-                </View>
-              </View>
-            </Overlay>
-          )
-        }
+        <Modal isVisible={this.state.visible}>
+          <View style={{ alignItems: 'center', backgroundColor: 'white', padding: 8 }}>
+            <Image source={require('../assets/img/warning.png')} />
+            <Text style={{ fontSize: 18, textAlign: 'center', marginVertical: 16 }}>คุณแน่ใจว่าต้องการอัพเดตข้อมูล?</Text>
+            <View style={{ flexDirection: 'row' }}>
+              <Button title='ตกลง' buttonStyle={{ backgroundColor: '#17A589', paddingHorizontal: 16, marginRight: 16 }} onPress={this.UpdateWithImage} loading={this.state.loading} />
+              <Button title='ยกเลิก' buttonStyle={{ backgroundColor: '#9F9C9E', paddingHorizontal: 16 }} onPress={() => this.setState({ visible: false, loading: false })} />
+            </View>
+          </View>
+        </Modal>
 
-        {
-          this.state.noImage && (
-            <Overlay
-              isVisible
-              overlayBackgroundColor="white"
-              overlayStyle={{ width: '75%', height: '35%', borderRadius: 15 }}
-            >
-              <View style={{ flex: 1, justifyContent: 'space-around' }}>
-                <View style={{ width: '100%', height: '35%', alignItems: 'center' }}>
-                  <Image source={require('../assets/img/warning.png')} />
-                </View>
-                <Text style={{ fontSize: 16, textAlign: 'center' }}>คุณแน่ใจว่าต้องการอัพเดตข้อมูลโดยไม่มีรูปภาพ?</Text>
-                <View style={{ width: '100%', height: '30%', alignItems: 'center', justifyContent: 'space-around', flexDirection: 'row' }}>
-                  <Button title='ตกลง' buttonStyle={{ backgroundColor: '#17A589' }} containerStyle={{ width: '40%' }} onPress={this.UpdateNoImage} loading={this.state.loading} />
-                  <Button title='ยกเลิก' buttonStyle={{ backgroundColor: '#9F9C9E' }} containerStyle={{ width: '40%' }} onPress={() => this.setState({ noImage: false, loading: false })} />
-                </View>
-              </View>
-            </Overlay>
-          )
-        }
+        <Modal isVisible={this.state.noImage}>
+          <View style={{ alignItems: 'center', backgroundColor: 'white', padding: 8 }}>
+            <Image source={require('../assets/img/warning.png')} />
+            <Text style={{ fontSize: 18, textAlign: 'center', marginVertical: 16 }}>คุณแน่ใจว่า ต้องการอัพเดตข้อมูลโดยไม่มีรูปภาพ?</Text>
+            <View style={{ flexDirection: 'row' }}>
+              <Button title='ตกลง' buttonStyle={{ backgroundColor: '#17A589', paddingHorizontal: 16, marginRight: 16 }} onPress={this.UpdateNoImage} loading={this.state.loading} />
+              <Button title='ยกเลิก' buttonStyle={{ backgroundColor: '#9F9C9E', paddingHorizontal: 16 }} onPress={() => this.setState({ noImage: false, loading: false })} />
+            </View>
+          </View>
+        </Modal>
       </View >
     );
   }
 }
 
-const styles = StyleSheet.create({
-  
-});
+// const styles = StyleSheet.create({
+// });

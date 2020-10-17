@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
-import { SearchBar, Overlay } from 'react-native-elements';
-import { Text, View, StyleSheet, TouchableOpacity, Image, Dimensions, ImageBackground, Alert } from 'react-native';
+import { SearchBar } from 'react-native-elements';
+import { Text, View, StyleSheet, TouchableOpacity, Image, Dimensions, Button, Alert } from 'react-native';
 // import { Button } from 'react-native-elements';
 import AsyncStorage from '@react-native-community/async-storage';
 import { StackActions } from '@react-navigation/native';
 import { instance as axios } from './axios';
-
+import Modal from 'react-native-modal';
+import { GoogleSignin } from '@react-native-community/google-signin';
 
 const resetAction = StackActions.replace('Logout');
 const resetAction2 = StackActions.replace('Login');
@@ -40,32 +41,57 @@ export default class home extends Component {
       search: search,
       searching: true,
     });
-
   };
 
-
-  signOut = async () => {
+  clearAndLogout = async () => {
     try {
+      // signout of Google
+      await GoogleSignin.revokeAccess();
+      await GoogleSignin.signOut();
+      // delete user data
       await AsyncStorage.removeItem('dataUser');
+      //jump to 'Login' page
       this.props.navigation.dispatch(resetAction2);
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
+  }
+
+  signOut = () => {
+    Alert.alert(
+      //title
+      'ออกจากระบบ',
+      //body
+      'ยืนยันการออกจากระบบ',
+      //choices
+      [
+        { text: 'ยกเลิก', onPress: () => {}},
+        {
+          text: 'ตกลง', onPress: () => {
+            this.clearAndLogout();
+          },
+        },
+      ],
+      {
+        cancelable: true
+      }
+      //clicking out side of alert will cancel
+    );
   };
 
   willFocus = () => {
     axios.get('/home_chart').then(response => {
       AsyncStorage.getItem('dataUser', (err, result) => {
         if (err) {
-          console.log(err)
+          console.log(err);
         }
 
         let data = JSON.parse(result);
         // console.log(response.data[0])
-        if(response.data[0] === undefined ||response.data[0].length === 0){
+        if (response.data[0] === undefined || response.data[0].length === 0) {
           Alert.alert('ยังไม่มีข้อมูลครุภัณฑ์ในระบบ', 'กรุณาติดต่อผู้ดูแลระบบ')
           this.signOut();
-        }else{
+        } else {
           this.setState({
             user_role: data.user_role,
             user_status: data.working_year,
@@ -85,8 +111,14 @@ export default class home extends Component {
         Alert.alert('การเชื่อมต่อมีปัญหา', 'กรุณาลองใหม่อีกครั้ง')
       }
     })
-
   }
+
+  componentDidMount() {
+    // this is required for Signout
+    GoogleSignin.configure({
+    });
+  }
+  
   componentDidUpdate() {
     this.searching();
   }
@@ -131,359 +163,189 @@ export default class home extends Component {
     }
   }
 
-
   render() {
     let year = new Date().getFullYear() + 543;
     this.state.Years = year;
     const { search } = this.state;
-    return (
-      <View style={styles.BG}>
 
+    return (
+      <View style={{ flex: 1 }}>
+        {/* Header and Signout Icon */}
         <View
-          style={{
-            marginTop: Dimensions.get('window').height / 60,
-            flexDirection: 'row',
-            justifyContent: 'space-around'
-          }}>
-          <View style={{ marginRight: Dimensions.get('window').height / 10 }}>
+          style={{ marginVertical: 8, marginHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View>
             <Text style={{ color: '#3fc0df', textAlign: 'left', fontSize: 28, fontWeight: 'bold' }}>IT
             <Text style={{ color: 'black' }}> ASSET</Text>
             </Text>
           </View>
 
-          <TouchableOpacity  onPress={() => this.props.navigation.dispatch(resetAction)}>
-            <Image style={{ width: Dimensions.get('window').width / 8, height: Dimensions.get('window').height / 15, borderRadius: 100, overflow: 'hidden', }}
-              source={{ uri: this.state.pathImage }} />
+          <TouchableOpacity onPress={this.signOut}>
+            <Image source={require('../assets/img/logout.png')} style={{width: 50, height: 50, resizeMode:"contain"}}/>
           </TouchableOpacity>
-
         </View>
 
+        {/* Logo and Checking dates */}
         <View style={{
-          width: Dimensions.get('window').width / 1.1,
-          height: Dimensions.get('window').height / 3.5,
           backgroundColor: 'white',
           justifyContent: 'center',
           alignItems: 'center',
-          marginLeft: Dimensions.get('window').height / 40,
-          marginTop: Dimensions.get('window').height / 60
+          marginHorizontal: 16,
+          paddingVertical: 8
         }}>
-          <Text style={{
-            fontWeight: "bold",
-            fontSize: 19
+          <Text style={{ fontWeight: "bold", fontSize: 19 }}>การตรวจนับครุภัณฑ์ประจำปี {this.state.Years}</Text>
+          <View style={{ flexDirection: 'row' }}>
+            <Image
+              style={{ flex: 1, height: 150 }}
+              source={require('../assets/img/main.jpg')}
+              resizeMode='cover'
+            />
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <Text style={{ fontSize: 14 }}>
+                วันที่เริ่มต้น : {this.state.date_start}
+              </Text>
+              <Text style={{ fontSize: 14 }}>
+                วันสิ้นสุด    : {this.state.date_end}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Search bar */}
+        <SearchBar
+          placeholder="ค้นหารหัสครุภัณฑ์"
+          onChangeText={this.updateSearch}
+          value={search}
+          // style={{ marginHorizontal: 16 }}
+          fontSize={16}
+          keyboardType='number-pad'
+          placeholderTextColor='gray'
+          containerStyle={{
+            backgroundColor: 'white',
+            borderColor: 'white',
+            // borderRadius: 16,
+            borderWidth: 1,
+            borderTopColor: 'white',
+            borderBottomColor: 'white',
+            // borderRightColor: '#3fc0df',
+            // borderLeftColor: '#3fc0df', 
+            marginHorizontal: 16           
           }}
-          >การตรวจนับครุภัณฑ์ประจำปี {this.state.Years}</Text>
-          <Image
-            source={require('../assets/img/main.jpg')}
-            // resizeMode='contain'
-            style={styles.photo}
-          />
-          <Text style={{
-            fontSize: 13,
-            bottom: Dimensions.get('window').height / 6,
-            left: Dimensions.get('window').width / 4.5
-          }}>
-            วันที่เริ่มต้น : {this.state.date_start}
-          </Text>
-          <Text style={{
-            fontSize: 13,
-            bottom: Dimensions.get('window').height / 6.5,
-            left: Dimensions.get('window').width / 4.5
-          }}>
-            วันสิ้นสุด    : {this.state.date_end}
-          </Text>
+          inputContainerStyle={{
+            borderRadius: 20,
+            backgroundColor: 'white',
+            borderColor: '#3fc0df',
+            borderWidth: 1.5
+          }}
+          showLoading={this.state.searching}
+          maxLength={15}
+          onClear={() => this.setState({ searching: false })}
+        />
 
-        </View>
-
-
-        <View style={{ width: Dimensions.get('window').width / 1.1, marginTop: Dimensions.get('window').height / 30, marginBottom: Dimensions.get('window').height / 60, marginLeft: Dimensions.get('window').height / 60, height: Dimensions.get('window').height / 18, textAlign: 'center' }}>
-          <SearchBar
-            placeholder="ค้นหารหัสครุภัณฑ์"
-            onChangeText={this.updateSearch}
-            value={search}
-            style={{ justifyContent: 'flex-start' }}
-            fontSize={16}
-            keyboardType='number-pad'
-            placeholderTextColor='#3fc0df'
-            containerStyle={{
-              backgroundColor: 'white',
-              borderRadius: 30,
-              borderWidth: 1.5,
-              borderTopColor: '#3fc0df',
-              borderBottomColor: '#3fc0df',
-              borderRightColor: '#3fc0df',
-              borderLeftColor: '#3fc0df',
-              height: Dimensions.get('window').height / 17
-            }}
-            inputContainerStyle={{
-              height: Dimensions.get('window').height / 28,
-              borderRadius: 30,
-              backgroundColor: 'white',
-            }}
-            showLoading={this.state.searching}
-            maxLength={15}
-            onClear={() => this.setState({ searching: false })}
-          />
-        </View>
-
-        <View
-          style={{
-            alignItems: 'center',
-            width: Dimensions.get('window').width,
-            marginTop: Dimensions.get('window').height / 60,
-            height: Dimensions.get('window').height / 3,
-          }}>
-
-          <View
-            style={{
-              width: Dimensions.get('window').width,
-              height: Dimensions.get('window').height / 7,
-              flexDirection: 'row',
-              marginTop: Dimensions.get('window').height / 60,
-              justifyContent: 'space-around'
-            }}>
-
-            <View style={styles.AllItem}>
-              <Text style={styles.Font}>ครุภัณฑ์ทั้งหมด</Text>
-              <View style={{
-                flexDirection: 'row',
-                marginTop: Dimensions.get('window').height / 400,
-                justifyContent: 'space-around',
-                marginRight: Dimensions.get('window').height / 20
-              }}>
+        {/* Dashboard */}
+        <View>
+          <View style={styles.dash_row}>
+            <View style={styles.dash_box}>
+              <Text style={styles.dash_title}>ครุภัณฑ์ทั้งหมด</Text>
+              <View style={styles.dash_subrow}>
                 <Image
                   source={require('../assets/img/All.png')}
-                  style={styles.LogoStatus}
+                  style={styles.dash_image}
                 />
-                <Text style={styles.Font2}>{this.state.item}</Text>
-
+                <Text style={styles.dash_number}>{this.state.item}</Text>
               </View>
-
             </View>
 
-            <View style={styles.Normal}>
-              <Text style={styles.Font}>ครุภัณฑ์ปกติ</Text>
-              <View style={{
-                flexDirection: 'row',
-                marginTop: Dimensions.get('window').height / 300,
-                justifyContent: 'space-around',
-                marginRight: Dimensions.get('window').height / 20
-              }}>
+            <View style={styles.dash_box}>
+              <Text style={styles.dash_title}>ครุภัณฑ์ปกติ</Text>
+              <View style={styles.dash_subrow}>
                 <Image
                   source={require('../assets/img/Normal.png')}
-                  style={styles.LogoStatus}
+                  style={styles.dash_image}
                 />
-                <Text style={styles.Font2}>{this.state.Normal_item}</Text>
+                <Text style={styles.dash_number}>{this.state.Normal_item}</Text>
               </View>
-
             </View>
-
           </View>
 
-          <View
-            style={{
-              width: Dimensions.get('window').width,
-              height: Dimensions.get('window').height / 7,
-              flexDirection: 'row',
-              marginTop: Dimensions.get('window').height / 60,
-              justifyContent: 'space-around'
-            }}>
-
-            <View style={styles.Normal}>
-              <Text style={styles.Font}>ครุภัณฑ์เสื่อมสภาพ
+          <View style={styles.dash_row}>
+            <View style={styles.dash_box}>
+              <Text style={styles.dash_title}>ครุภัณฑ์เสื่อมสภาพ
               </Text>
-              <View style={{
-                flexDirection: 'row',
-                marginTop: Dimensions.get('window').height / 300,
-                justifyContent: 'space-around',
-                marginRight: Dimensions.get('window').height / 20
-              }}>
+              <View style={styles.dash_subrow}>
                 <Image
                   source={require('../assets/img/Fix.png')}
-                  style={styles.LogoStatus}
+                  style={styles.dash_image}
                 />
-                <Text style={styles.Font2}>{this.state.Repair_item}</Text>
+                <Text style={styles.dash_number}>{this.state.Repair_item}</Text>
               </View>
-
             </View>
 
-            <View style={styles.Normal}>
-              <Text style={styles.Font}>ครุภัณฑ์สูญหาย
+            <View style={styles.dash_box}>
+              <Text style={styles.dash_title}>ครุภัณฑ์สูญหาย
               </Text>
-              <View style={{
-                flexDirection: 'row',
-                marginTop: Dimensions.get('window').height / 300,
-                justifyContent: 'space-around',
-                marginRight: Dimensions.get('window').height / 20
-              }}>
+              <View style={styles.dash_subrow}>
                 <Image
                   source={require('../assets/img/Dis.png')}
-                  style={styles.LogoStatus}
+                  style={styles.dash_image}
                 />
-                <Text style={styles.Font2}>{this.state.lost_item}</Text>
+                <Text style={styles.dash_number}>{this.state.lost_item}</Text>
               </View>
-
             </View>
-
           </View>
-
         </View>
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
 
-          }}>
-          <View
+        {/* Scan button */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+          <TouchableOpacity
             style={{
-              flex: 1,
-              width: Dimensions.get('window').width,
+              backgroundColor: '#3fc0df',
+              borderRadius: 50,
+              width: 80,
+              height: 80,
               justifyContent: 'center',
-              alignItems: 'center',
-              position: 'absolute',
-              zIndex: 90
-            }}>
-
-            <View
-              style={{
-                width: Dimensions.get('window').width,
-                flexDirection: 'row',
-                justifyContent: 'space-around',
-                paddingHorizontal: Dimensions.get('window').height / 90,
-                alignItems: 'flex-end',
-                height: Dimensions.get('window').height / 11,
-                marginTop: Dimensions.get('window').height / 60
-              }}>
-              <TouchableOpacity
-                style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: '#3fc0df',
-                  width: Dimensions.get('window').width / 5,
-                  height: Dimensions.get('window').height / 10,
-                  borderRadius: 50,
-                }}
-                onPress={() => this.props.navigation.navigate('Scan')}>
-                <Image
-                  style={{ width: Dimensions.get('window').width / 8.9, height: Dimensions.get('window').height / 18 }}
-                  source={require('../assets/img/qr-code.png')}
-                  resizeMode='cover'
-                />
-              </TouchableOpacity>
-            </View>
-
-
-          </View>
+              alignItems: 'center'
+            }}
+            onPress={() => this.props.navigation.navigate('Scan')}>
+            <Image
+              source={require('../assets/img/qr-code.png')}
+              resizeMode='contain'
+              style={{ height: 50, width: undefined, aspectRatio: 1 }}
+            />
+          </TouchableOpacity>
         </View>
-        {
-          this.state.visible && (
-            <Overlay
-              isVisible
-              overlayBackgroundColor="white"
-              overlayStyle={{ width: '60%', height: '30%' }}
-            >
-              <View style={{ flex: 1 }}>
-                <View style={{ width: '100%', height: '40%', alignItems: 'center', justifyContent: 'center' }}>
-                  <Image source={require('../assets/img/alert.png')} style={{ width: '25%', height: '80%' }} resizeMode="stretch" />
-                </View>
-                <View style={{ width: '100%', height: '35%', justifyContent: 'center', alignItems: 'center' }}>
-                  <Text >ไม่พบข้อมูล</Text>
-                </View>
-                <View style={{ width: '100%', height: '25%', alignItems: 'center', justifyContent: 'center' }}>
-                  <TouchableOpacity onPress={() => this.setState({ visible: false, loading: false })} style={{ width: '80%', height: '100%', backgroundColor: '#FD003A', borderRadius: 20, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ color: 'white' }}>ตกลง</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Overlay>
-          )
-        }
+
+        {/* Modal: Searching not found */}
+        <Modal
+          isVisible={this.state.visible}
+          onBackdropPress={() => { this.setState({ visible: false }) }}
+        >
+          <View style={{ alignItems: 'center', backgroundColor: 'white', padding: 8 }}>
+            <Image source={require('../assets/img/warning.png')} style={{ width: 50 }} />
+            <Text style={{ fontSize: 22, fontWeight: 'bold', marginVertical: 16 }}>ไม่พบข้อมูล</Text>
+            <Button title="ปิด" onPress={() => { this.setState({ visible: false }) }} />
+          </View>
+        </Modal>
       </View >
     );
   }
 }
 const styles = StyleSheet.create({
-  BG: {
-    flex: 1,
-    backgroundColor: '#f4f4f5',
+  dash_row: {
+    flexDirection: 'row', justifyContent: 'center', marginTop: 8, paddingHorizontal: 8,
   },
-  btn: {
-    backgroundColor: '#3A405A',
-    borderRadius: 5,
-    height: '50%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '35%',
-    flexDirection: 'row',
+  dash_box: {
+    flex: 1, backgroundColor: 'white', borderRadius: 24, padding: 8, marginHorizontal: 8,
   },
-  Font: {
-    color: 'black',
-    textAlign: 'center',
-    fontSize: 15,
-    marginTop: '10%',
-    fontWeight: "bold"
-
+  dash_title: {
+    fontSize: 16, fontWeight: 'bold',
   },
-  Font2: {
-    color: 'black',
-    fontSize: 36,
-    marginTop: '5%',
-    marginLeft: '30%',
+  dash_subrow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  LogoStatus: {
-    aspectRatio: 1,
-    height: Dimensions.get('window').height / 7,
-    width: Dimensions.get('window').width / 7,
-    marginLeft: Dimensions.get('window').width / 15,
+  dash_image: {
+    height: 50, resizeMode: 'contain',
   },
-  LOGO: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  Lost: {
-    backgroundColor: 'white',
-    borderRadius: 30,
-    width: '45%',
-    height: '100%',
-  },
-  AllItem: {
-    backgroundColor: 'white',
-    borderRadius: 30,
-    width: '45%',
-    height: '100%',
-  },
-  Normal: {
-    backgroundColor: 'white',
-    borderRadius: 30,
-    width: '45%',
-    height: '100%',
-
-  },
-  Repair: {
-    backgroundColor: 'white',
-    borderRadius: 30,
-    width: '45%',
-    height: '100%',
-  },
-  indecator: {
-    position: 'absolute',
-    left: 0,
-    marginHorizontal: 10,
-    zIndex: -99
-  },
-  overlay: {
-    width: Dimensions.get('window').width,
-    zIndex: 99,
-    alignItems: 'center',
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    paddingTop: '5%'
-  },
-  photo: {
-    width: Dimensions.get('window').width / 2.42,
-    height: Dimensions.get('window').height / 5,
-    right: Dimensions.get('window').width / 5,
-    marginTop: Dimensions.get('window').height / 60,
-  }
+  dash_number: {
+    fontSize: 32
+  },  
 });

@@ -27,6 +27,12 @@ export default class loading extends Component {
     this.getData();
   }
 
+  componentDidMount() {
+    // this is required for Signout
+    GoogleSignin.configure({
+    });
+  }
+
   clearAndLogout = async () => {
     try {
       // signout of Google
@@ -37,7 +43,7 @@ export default class loading extends Component {
       //jump to 'Login' page
       this.props.navigation.dispatch(resetAction);
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
   }
 

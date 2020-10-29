@@ -195,7 +195,7 @@ export default class update extends Component {
               <Image
                 source={this.state.image != '' ? { uri: this.state.image } : require('../assets/img/addimgNew1.png')}
                 resizeMode="contain"
-                style={{ width: null, height: 180, marginVertical: 16 }} />
+                style={{ width: null, height: 150, marginVertical: 8 }} />
             </TouchableOpacity>
 
             {/* Asset details */}

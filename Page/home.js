@@ -6,10 +6,11 @@ import AsyncStorage from '@react-native-community/async-storage';
 import { StackActions } from '@react-navigation/native';
 import { instance as axios } from './axios';
 import Modal from 'react-native-modal';
-import { GoogleSignin } from '@react-native-community/google-signin';
+// import { GoogleSignin } from '@react-native-community/google-signin';
 
-const resetAction = StackActions.replace('Logout');
+// const resetAction = StackActions.replace('Logout');
 const resetAction2 = StackActions.replace('Login');
+
 export default class home extends Component {
   constructor(props) {
     super(props);
@@ -31,29 +32,30 @@ export default class home extends Component {
       date_end: '-',
       pathImage: 'mm',
     };
-    this.subs = [
-      this.props.navigation.addListener('focus', this.willFocus)
-    ];
+    // this.subs = [
+    //   this.props.navigation.addListener('focus', this.willFocus)
+    // ];
   }
 
   updateSearch = search => {
     this.setState({
       search: search,
       searching: true,
-    });
+    });    
   };
 
   clearAndLogout = async () => {
     try {
       // signout of Google
-      await GoogleSignin.revokeAccess();
-      await GoogleSignin.signOut();
+      // await GoogleSignin.revokeAccess();
+      // await GoogleSignin.signOut();
       // delete user data
       await AsyncStorage.removeItem('dataUser');
       //jump to 'Login' page
       this.props.navigation.dispatch(resetAction2);
     } catch (error) {
       console.log(error);
+      Alert.alert("ไม่สามารถลบผู้ใช้งานและออกจากระบบได้");
     }
   }
 
@@ -79,11 +81,19 @@ export default class home extends Component {
     );
   };
 
-  willFocus = () => {
+  componentDidMount() {
+    // this is required for Signout
+    // GoogleSignin.configure({
+    // });
+
+    // get asset data
+    // FIXME: service error
+
     axios.get('/home_chart').then(response => {
       AsyncStorage.getItem('dataUser', (err, result) => {
         if (err) {
-          console.log(err);
+          Alert.alert('ข้อมูลมีปัญหา', 'ไม่สามารถอ่านข้อมูลจากอุปกรณ์ได้');
+          return;
         }
 
         let data = JSON.parse(result);
@@ -101,34 +111,34 @@ export default class home extends Component {
             Repair_item: response.data[0].product_repair,
             date_start: response.data[0].Date_start,
             date_end: response.data[0].Date_end,
-            pathImage: data.Photo
+            // pathImage: data.Photo
           })
         }
-
-      })
+      });
     }).catch(error => {
       if (error.code === 'ECONNABORTED') {
-        Alert.alert('การเชื่อมต่อมีปัญหา', 'กรุณาลองใหม่อีกครั้ง')
+        Alert.alert('การเชื่อมต่อมีปัญหา', 'กรุณาลองใหม่อีกครั้ง');
       }
-    })
-  }
-
-  componentDidMount() {
-    // this is required for Signout
-    GoogleSignin.configure({
+      console.log(error);
     });
   }
   
   componentDidUpdate() {
-    this.searching();
+    // this.searching();
   }
 
-  searching = async () => {
-    let searchLength = this.state.search.length
+  searching = async (search) => {
+    this.setState({
+      search: search,
+      searching: true,
+    });
+
+    // let searchLength = this.state.search.length
+    let searchLength = search.length
     let year = new Date().getFullYear() + 543;
     this.state.Years = year;
     if (searchLength == 15) {
-      let response = await axios.get('/check_date/' + this.state.search);
+      let response = await axios.get('/check_date/' + search);
       if (response.data == 1 && this.state.user_role == 2 && this.state.user_status == year) {
         this.props.navigation.navigate('Update', {
           product_id: this.state.search
@@ -169,7 +179,7 @@ export default class home extends Component {
     const { search } = this.state;
 
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, justifyContent: 'space-between' }}>
         {/* Header and Signout Icon */}
         <View
           style={{ marginVertical: 8, marginHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -195,9 +205,9 @@ export default class home extends Component {
           <Text style={{ fontWeight: "bold", fontSize: 19 }}>การตรวจนับครุภัณฑ์ประจำปี {this.state.Years}</Text>
           <View style={{ flexDirection: 'row' }}>
             <Image
-              style={{ flex: 1, height: 150 }}
+              style={{ flex: 1, height: 80 }}
               source={require('../assets/img/main.jpg')}
-              resizeMode='cover'
+              resizeMode='contain'
             />
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <Text style={{ fontSize: 14 }}>
@@ -213,7 +223,8 @@ export default class home extends Component {
         {/* Search bar */}
         <SearchBar
           placeholder="ค้นหารหัสครุภัณฑ์"
-          onChangeText={this.updateSearch}
+          // onChangeText={this.updateSearch}
+          onChangeText={this.searching}
           value={search}
           // style={{ marginHorizontal: 16 }}
           fontSize={16}
@@ -295,7 +306,7 @@ export default class home extends Component {
         </View>
 
         {/* Scan button */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 8 }}>
           <TouchableOpacity
             style={{
               backgroundColor: '#3fc0df',
@@ -309,7 +320,7 @@ export default class home extends Component {
             <Image
               source={require('../assets/img/qr-code.png')}
               resizeMode='contain'
-              style={{ height: 50, width: undefined, aspectRatio: 1 }}
+              style={{ height: 50, width: undefined, aspectRatio: 1}}
             />
           </TouchableOpacity>
         </View>
@@ -346,6 +357,6 @@ const styles = StyleSheet.create({
     height: 50, resizeMode: 'contain',
   },
   dash_number: {
-    fontSize: 32
+    fontSize: 24
   },  
 });

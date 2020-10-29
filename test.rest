@@ -13,3 +13,6 @@ content-type: application/json
     "email": "surapong@mfu.ac.th",
     "name": "Surapong Uttama"
 }
+
+###
+http://asset.itschool.mfu.ac.th/api/mobile/home_chart

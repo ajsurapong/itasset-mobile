@@ -18,10 +18,12 @@ export default class login extends Component {
     }
     componentDidMount() {
         GoogleSignin.configure({
-            // for debug
+            // for debug, from student
             webClientId: '554076515162-scbjs4uqiunmf67ei13v77nuite6h0p8.apps.googleusercontent.com',
-            // for release
-            // webClientId: '775721000882-faarmt5b1efan6eb6cuok6blb9ejrl88.apps.googleusercontent.com',
+            // for web, from cs.itschool account, NOT working
+            // webClientId: '775721000882-dioi0k52p15sfog4qqibloqs65v16d2t.apps.googleusercontent.com',
+            // for release, android, NOT working
+            // androidClientId: '775721000882-931mfb8oqketblp7vm8l0mibf0i9scgr.apps.googleusercontent.com',
             offlineAccess: true,
             hostedDomain: '',
             forceConsentPrompt: true,
@@ -47,6 +49,7 @@ export default class login extends Component {
             //check whether the Google user belongs to our system
             axios.post('/login', { email: info.user.email }).then(response => {
                 if (response.data.length != 1) {
+                    Alert.alert("คุณไม่มีสิทธิ์ใช้งานระบบ กรุณาติดต่อผู้ดูแลระบบ");
                     // force logout of Google to allow a new user at the next login
                     this._forceLogout();
                 }
@@ -70,6 +73,7 @@ export default class login extends Component {
                                 // save user data for other pages
                                 AsyncStorage.setItem('dataUser', JSON.stringify(dataUser), (err) => {
                                     if (err) {
+                                        Alert.alert('ไม่สามารบันทึกข้อมูลลงในเครื่องของคุณได้');
                                         console.log("Cannot save data to device " + err);
                                     }
                                     else {
@@ -86,6 +90,7 @@ export default class login extends Component {
                             // save user data for other pages
                             AsyncStorage.setItem('dataUser', JSON.stringify(dataUser), (err) => {
                                 if (err) {
+                                    Alert.alert('ไม่สามารบันทึกข้อมูลลงในเครื่องของคุณได้');
                                     console.log("Cannot save data to device " + err);
                                 }
                                 else {
@@ -101,14 +106,13 @@ export default class login extends Component {
                 }
             }).catch(error => {
                 if (error.code === 'ECONNABORTED') {
-                    console.log(error.code)
+                    console.log(error);
                     Alert.alert('การเชื่อมต่อมีปัญหา', 'กรุณาลองใหม่อีกครั้ง');
                 }
                 else {
                     Alert.alert('ไม่พบผู้ใช้งาน');
                 }
             });
-
         } catch (error) {
             console.log(error);
             if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {

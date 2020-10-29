@@ -5,6 +5,14 @@
 -change Image fit mode from 'cover' to 'contain
 -Google signin ID is different for debug and release mode and also for Android and iOS (See Google Developer Console)
 
+=== Building debug APK without Metro server ===
+https://stackoverflow.com/questions/35283959/build-and-install-unsigned-apk-on-device-without-the-development-server
+-Make sure you have already directory android/app/src/main/assets/, if not create directory, after that create new file and save as index.android.bundle and put your file in like this android/app/src/main/assets/index.android.bundle
+At project folder
+-react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res/
+-cd android 
+-gradlew assembleDebug
+
 === Building release APK ===
 https://reactnative.dev/docs/signed-apk-android
 for offline usage, change the last step to 'gradlew assembleRelease' in android folder

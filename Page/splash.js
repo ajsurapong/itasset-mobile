@@ -2,7 +2,10 @@ import React, { Component } from 'react'
 import { Text, StyleSheet, View, ImageBackground, Image, Dimensions } from 'react-native'
 // import { CirclesLoader } from 'react-native-indicator'
 import AsyncStorage from '@react-native-community/async-storage';
+import { StackActions } from '@react-navigation/native';
 
+const loginAction = StackActions.replace('Login');
+const homeAction = StackActions.replace('Home');
 
 export default class splash extends Component {
     // constructor() {
@@ -17,10 +20,12 @@ export default class splash extends Component {
         // this.setState({ isLoad: true })
         if (data == null) {
             // this.setState({ isLoad: false })
-            this.props.navigation.navigate('Login');
+            // this.props.navigation.navigate('Login');
+            this.props.navigation.dispatch(loginAction);
         } else {
             // this.setState({ isLoad: false });
-            this.props.navigation.navigate('Home');
+            // this.props.navigation.navigate('Home');
+            this.props.navigation.dispatch(homeAction);
         }
     }
 
